@@ -166,7 +166,7 @@ if grep -q "^private_key\s*=\s*'0x.*'" "$SETTINGS_FILE"; then
 else
     # 确保没有多余的换行符
     echo -e "$PRIVATE_KEY_LINE" >> "$SETTINGS_FILE"
-    print_success "已在 settings.toml 末尾添加 private_key。"
+    print_success "已在 settings.toml 配置了 private_key。"
 fi
 
 # 运行机器人
