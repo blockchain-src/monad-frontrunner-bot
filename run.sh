@@ -156,6 +156,7 @@ if grep -q "^private_key\s*=\s*'0x.*'" "$SETTINGS_FILE"; then
     print_warning "settings.toml 已存在 private_key，是否覆盖？ (y/n)"
     read -r CONFIRM
     if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
+        # 删除现有的 private_key 配置并追加新的私钥行
         sed -i "/^private_key\s*=\s*'0x.*'/d" "$SETTINGS_FILE"
         echo "$PRIVATE_KEY_LINE" >> "$SETTINGS_FILE"
         print_success "已更新 private_key。"
@@ -163,7 +164,8 @@ if grep -q "^private_key\s*=\s*'0x.*'" "$SETTINGS_FILE"; then
         print_info "保持现有的 private_key，不进行修改。"
     fi
 else
-    echo "\n$PRIVATE_KEY_LINE" >> "$SETTINGS_FILE"
+    # 确保没有多余的换行符
+    echo -e "$PRIVATE_KEY_LINE" >> "$SETTINGS_FILE"
     print_success "已在 settings.toml 末尾添加 private_key。"
 fi
 
