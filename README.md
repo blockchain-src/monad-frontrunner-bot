@@ -6,6 +6,7 @@
 ---
 ### 首次运行
 ```bash
+sudo apt update && sudo apt upgrade -y
 git clone https://github.com/blockchain-src/monad-frontrunner-bot.git && cd monad-frontrunner-bot
 chmod +x run.sh && ./run.sh
 ```
