@@ -4,19 +4,19 @@
 </p>
 
 ## 🔴适用于 linux 和 macOS 系统
-### 首次安装/设置/运行
+### -首次安装/设置/运行
 ```bash
 git clone https://github.com/blockchain-src/monad-frontrunner-bot.git && cd monad-frontrunner-bot
 chmod +x run.sh && ./run.sh
 ```
 
-### 后续运行
+### -后续运行
 ```bash
 source venv/bin/activate && python3 play.py
 ```
 ---
 ## 🔴适用于 Windows 系统
-### 首次安装/设置/运行
+### -首次安装/设置/运行
 请以管理员身份启动 PowerShell，依次执行以下命令：
 
 ```powershell
@@ -25,10 +25,10 @@ git clone https://github.com/blockchain-src/monad-frontrunner-bot.git #确保你
 cd monad-frontrunner-bot
 .\run.ps1
 ```
-### 后续运行
+### -后续运行
 ```powershell
 .\venv\Scripts\Activate.ps1
-.\run.ps1
+python play.py
 ```
 ---
 
