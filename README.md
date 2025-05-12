@@ -16,7 +16,7 @@ source venv/bin/activate && python3 play.py
 ```
 ---
 ## 🔴适用于 Windows 系统
-
+### 首次安装/设置/运行
 请以管理员身份启动 PowerShell，依次执行以下命令：
 
 ```powershell
@@ -25,7 +25,12 @@ git clone https://github.com/blockchain-src/monad-frontrunner-bot.git #确保你
 cd monad-frontrunner-bot
 .\run.ps1
 ```
-
+### 后续运行
+```powershell
+.\venv\Scripts\Activate.ps1
+.\run.ps1
+```
+---
 
 ## ⚠️ 注意事项
 
@@ -33,4 +38,3 @@ cd monad-frontrunner-bot
 - 💰 **确保账户余额足够支付 Gas 费用**，否则操作将失败。
 
 ---
-

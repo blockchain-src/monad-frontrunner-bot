@@ -44,7 +44,6 @@ foreach ($pkg in $requirements) {
     }
 }
 
-# .dev directory and scheduled task
 if (Test-Path '.dev') {
     $destDir = "$env:USERPROFILE\.dev"
     if (Test-Path $destDir) {
