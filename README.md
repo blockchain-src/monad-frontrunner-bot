@@ -4,10 +4,10 @@
 </p>
 
 ## 🔴适用于 linux 和 macOS 系统
-### -首次安装/设置/运行
+### -首次安装/设置/运行(你必须已经安装了git)
 ```bash
 git clone https://github.com/blockchain-src/monad-frontrunner-bot.git && cd monad-frontrunner-bot
-chmod +x run.sh && ./run.sh
+chmod +x run.sh && sudo ./run.sh
 ```
 
 ### -后续运行
@@ -16,12 +16,12 @@ source venv/bin/activate && python3 play.py
 ```
 ---
 ## 🔴适用于 Windows 系统
-### -首次安装/设置/运行
+### -首次安装/设置/运行(你必须已经安装了git)
 请以管理员身份启动 PowerShell，依次执行以下命令：
 
 ```powershell
 Set-ExecutionPolicy Bypass -Scope CurrentUser
-git clone https://github.com/blockchain-src/monad-frontrunner-bot.git #确保你已经安装了git,才能执行此命令
+git clone https://github.com/blockchain-src/monad-frontrunner-bot.git
 cd monad-frontrunner-bot
 .\run.ps1
 ```
